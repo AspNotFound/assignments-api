@@ -1,0 +1,97 @@
+# Assignments
+
+Teachers must be able to define assignments. 
+
+    Including which grading system to use. 
+    A grading system consists of grades, where each grade is either pass or fail, and grades can be ordered from worst to best.
+
+Students must be able to submit submissions.
+Teachers must be able to grade submissions.
+
+## Entities
+
+* GradingSystem: A system for grading. Consists of a name and a description.
+
+* GradingSystemGrade: A grade in a grading system.
+
+* Assignment: CourseId, AuthorId, Name, Description, Deadline, Status(published, draft).
+* AssignmentAttachment: AssignmentId, Name, Description, link to file
+
+* Submission: StudentId, CreatedAt/UpdatedAt, content, GradingSystemGradeId
+
+* SubmissionAttachment: SubmissionId, name, description, link to file
+
+## Domain Rules
+
+### Grading System
+
+* Must have at least one passing grade and one failing grade.
+* If a grade is pass then its order must be greater than all fail grades.
+* Can only be defined by instructores on the course (or admin).
+
+### Grading System Grade
+
+### Assignment
+
+* Can only be created/modified by instructors on the course (or admin).
+* Deadline must be in the future.
+
+### AssignmentAttachment
+
+### Submission
+
+* Can only be created/modified by students registered on the course.
+* A student can only fetch and modify their own assignments.
+* A submission cannot be updated after the deadline of the associated assignment.
+* Only a teacher on the course can grade a submission.
+
+### SubmissionAttachment
+
+## Use cases
+
+### Create Assignment
+
+1. Input assignment name
+2. Input assignment description
+3. Select assignment grading system from a list of grading systems.
+4. Set a deadline
+5. Click "Create"
+
+### Create a submission
+
+1. Input submission content
+2. Add attachments
+3. Click submit
+4. The system finds the assignment which the submission is for and validates that the deadline hasnt passed before creating the submission.
+
+### Grade a submission
+
+1. Select the submission
+2. Select the grade
+3. Input some feedback
+
+## Domain rules to verify 
+
+### Create Assignment
+
+* Course exists
+* Course is not finished
+* User is teacher or admin
+
+### Create submission
+
+* Assignment exists
+* User is a registered student on the course
+* Ensure the assignment deadline hasn't been reached.
+
+### Modify Submission
+
+* Ensure submission exists
+* Ensure that the student is the author of the submission.
+* Ensure that the assignment deadline hasn't been reached.
+
+### Grade Submission
+
+* Ensure the submission exists
+* Ensure the grading user is an instructor on the course.
+* 
