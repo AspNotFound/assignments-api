@@ -3,7 +3,6 @@ using Assignment.Application.Commands.Assignments;
 using Assignment.Application.Commands.Assignments.Handlers;
 using Assignment.Application.Queries.Assignments;
 using Assignment.Application.Queries.Assignments.Handlers;
-using Assignment.Application.Utility;
 
 namespace Assignment.Api.EndPoints;
 
