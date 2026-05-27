@@ -6,7 +6,7 @@ using Assignment.Application.Utility;
 
 namespace Assignment.Application.Queries.Assignments.Handlers;
 
-public class GetAllAssignmentsByCourseHandler
+public class GetAllAssignmentsHandler
 (
     IAssignmentReadRepository assignment,
     AssignmentAuthorizationPolicy authorizationPolicy
@@ -15,13 +15,16 @@ public class GetAllAssignmentsByCourseHandler
     private readonly IAssignmentReadRepository _assignment = assignment;
     private readonly AssignmentAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
-    public async Task<Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>> HandleAsync(GetAllAssignmentsByCourseQuery request)
+    public async Task<Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>> HandleAsync(GetAllAssignments request)
     {
-        var userHasAccess = await _authorizationPolicy.CanAccessCourseAssignmentsAsync(request.CourseId);
-        if (!userHasAccess)
-            return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>.Failure(FailureType.Unauthorized, "You do not have access to the assignments of this course.");
+        if (!string.IsNullOrEmpty(request.CourseId))
+        {
+            var userHasAccess = await _authorizationPolicy.CanAccessCourseAssignmentsAsync(request.CourseId);
+            if (!userHasAccess)
+                return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>.Failure(FailureType.Unauthorized, "You do not have access to the assignments of this course.");
+        }
 
-        var entities = await _assignment.GetAllByCourseIdAsync(request.CourseId);
+        var entities = await _assignment.GetAll(request.CourseId);
 
         var dtos = (await Task.WhenAll(entities.Select(async e => Dto<Domain.Aggregates.Assignment, Permissions>.Create(e, new Permissions(Edit: await _authorizationPolicy.CanModifyAssignmentAsync(e.Id)))))).ToList();
         return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>.Success(dtos);

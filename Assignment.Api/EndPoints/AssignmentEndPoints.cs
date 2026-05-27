@@ -12,6 +12,10 @@ public static class AssignmentEndPoints
     {
         var group = app.MapGroup("/api/assignment").RequireAuthorization();
 
+        group.MapGet("/", GetAssignments)
+            .WithName("GetAssignments")
+            .WithDescription("Retrieves all assignments");
+
         group.MapGet("/{id:guid}", GetAssignmentById)
             .WithName("GetAssignmentById")
             .WithDescription("Retrieves an assignment by its ID.");
@@ -54,6 +58,12 @@ public static class AssignmentEndPoints
     {
         var command = new DeleteAssignmentCommand(id);
         var result = await handler.HandleAsync(command);
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetAssignments(string? courseId, GetAllAssignmentsHandler handler)
+    {
+        var result = await handler.HandleAsync(new GetAllAssignments(courseId));
         return result.ToResult();
     }
 }

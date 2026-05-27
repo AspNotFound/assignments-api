@@ -17,9 +17,14 @@ public class AssignmentReadRepository(AssignmentContext context) : IAssignmentRe
         return entity != null ? Mapping.ConvertEntityToDomainModel(entity) : default;
     }
 
-    public async Task<IReadOnlyCollection<Domain.Aggregates.Assignment>> GetAllByCourseIdAsync(string courseId)
+    public async Task<IReadOnlyCollection<Domain.Aggregates.Assignment>> GetAll(string? courseId)
     {
-        var entities = await _context.Assignments.AssignmentQuery().AsNoTracking().Where(a => a.CourseId == courseId).ToListAsync();
+        var query = _context.Assignments.AssignmentQuery().AsNoTracking();
+        if (!string.IsNullOrEmpty(courseId))
+        {
+            query = query.Where(a => a.CourseId == courseId);
+        }
+        var entities = await query.ToListAsync();
         return [.. entities.Select(Mapping.ConvertEntityToDomainModel)];
     }
 

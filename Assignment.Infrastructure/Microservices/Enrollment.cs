@@ -9,8 +9,9 @@ public class Enrollment : IEnrollmentService
         // Initialize any necessary resources or dependencies here
     }
 
+#warning implement these
     public async Task<bool> IsStudentOfCourseAsync(string userId, string courseId)
     {
-        throw new NotImplementedException();
+        return true;
     }
 }

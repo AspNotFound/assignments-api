@@ -206,7 +206,7 @@ public class InfrastructureReadRepositoryTests
 
         var byId = await repository.GetByIdAsync(a1.Id);
         var courseId = await repository.GetCourseIdByAssignmentIdAsync(a1.Id);
-        var byCourse = await repository.GetAllByCourseIdAsync("course-read");
+        var byCourse = await repository.GetAll("course-read");
 
         Assert.Multiple(() =>
         {

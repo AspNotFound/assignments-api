@@ -30,7 +30,18 @@ where T_Entity : class
     {
         var entityId = DomainModelIdToEntityId(id);
         var trackedEntity = _context.ChangeTracker.Entries<T_Entity>().FirstOrDefault(e => EntityIdSelector(e.Entity)?.Equals(entityId) == true);
-        trackedEntity?.State = EntityState.Deleted;
+        if (trackedEntity == null)
+        {
+            var entity = Set.Find(entityId);
+            if (entity != null)
+            {
+                Set.Remove(entity);
+            }
+        }
+        else
+        {
+            trackedEntity.State = EntityState.Deleted;
+        }
     }
 
     public virtual async Task SaveChangesAsync()

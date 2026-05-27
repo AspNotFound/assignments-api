@@ -26,7 +26,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<DeleteSubmissionHandler>();
         services.AddScoped<JudgeSubmissionHandler>();
 
-        services.AddScoped<GetAllAssignmentsByCourseHandler>();
+        services.AddScoped<GetAllAssignmentsHandler>();
         services.AddScoped<GetAssignmentByIdHandler>();
 
         services.AddScoped<GetAllGradingSystemsHandler>();
