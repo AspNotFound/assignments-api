@@ -1,3 +1,4 @@
+using Assignment.Application.Abstractions;
 using Assignment.Application.Abstractions.ReadRepositories;
 using Assignment.Application.Dtos;
 using Assignment.Application.Security.Authorization;
@@ -6,20 +7,22 @@ using Assignment.Application.Utility;
 
 namespace Assignment.Application.Queries.Submissions.Handlers;
 
-public class GetAuthorAssignmentSubmissionHandler
+public class GetAssignmentSubmissionHandler
 (
     IAssignmentReadRepository assignment,
     ISubmissionReadRepository submission,
-    SubmissionAuthorizationPolicy authorizationPolicy
+    SubmissionAuthorizationPolicy authorizationPolicy,
+    IUser user
 )
 {
     private readonly IAssignmentReadRepository _assignment = assignment;
     private readonly ISubmissionReadRepository _submission = submission;
     private readonly SubmissionAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
+    private readonly IUser _user = user;
 
-    public async Task<Result<Dto<Domain.Aggregates.Submission, SubmissionPermissions>>> HandleAsync(GetAuthorAssignmentSubmissionQuery request)
+    public async Task<Result<Dto<Domain.Aggregates.Submission, SubmissionPermissions>>> HandleAsync(GetAssignmentSubmissionQuery request)
     {
-        var submission = await _submission.GetByAssignmentAndAuthorAsync(request.AssignmentId, request.AuthorId);
+        var submission = await _submission.GetByAssignmentAndAuthorAsync(request.AssignmentId, _user.UserId);
         if (submission == null)
             return Result<Dto<Domain.Aggregates.Submission, SubmissionPermissions>>.Failure(FailureType.NotFound, "Submission not found.");
 

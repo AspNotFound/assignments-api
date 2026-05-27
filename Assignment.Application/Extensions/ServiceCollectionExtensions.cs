@@ -32,7 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<GetAllGradingSystemsHandler>();
         services.AddScoped<GetGradingSystemByIdHandler>();
 
-        services.AddScoped<GetAuthorAssignmentSubmissionHandler>();
+        services.AddScoped<GetAssignmentSubmissionHandler>();
         services.AddScoped<GetSubmissionByIdHandler>();
         services.AddScoped<GetSubmissionsByAssignmentHandler>();
 

@@ -31,6 +31,10 @@ public static class SubmissionEndPoints
         group.MapPost("/judge", Judge)
             .WithName("JudgeSubmission")
             .WithDescription("Judges a submission by its ID.");
+
+        group.MapGet("/assignment/{assignmentId:guid}", GetByAssignmentId)
+            .WithName("GetAssignmentSubmission")
+            .WithDescription("Retrieves a submission for the current user by assignment ID.");
     }
 
     private static async Task<IResult> Get(Guid id, GetSubmissionByIdHandler handler)
@@ -61,6 +65,12 @@ public static class SubmissionEndPoints
     private static async Task<IResult> Judge(JudgeSubmissionCommand command, JudgeSubmissionHandler handler)
     {
         var result = await handler.HandleAsync(command);
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetByAssignmentId(Guid assignmentId, GetAssignmentSubmissionHandler handler)
+    {
+        var result = await handler.HandleAsync(new GetAssignmentSubmissionQuery(assignmentId));
         return result.ToResult();
     }
 }
