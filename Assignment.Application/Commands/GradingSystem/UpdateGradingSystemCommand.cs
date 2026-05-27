@@ -2,7 +2,7 @@ namespace Assignment.Application.Commands.GradingSystem;
 
 public record UpdateGradingSystemCommand
 (
-    Guid GradingSystemId,
+    Guid Id,
     string Name,
     List<UpdateGradingSystemGrade> Grades
 );

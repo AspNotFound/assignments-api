@@ -4,10 +4,9 @@ namespace Assignment.Application.Abstractions.Repositories;
 
 public interface ISubmissionRepository
 {
-    Task AddAsync(Submission submission);
+    void Add(Submission submission);
     Task<Submission?> GetByIdAsync(Guid id);
-    Task UpdateAsync(Submission submission);
-    Task DeleteAsync(Guid id);
-
-    Task<bool> UserSubmissionExistsAsync(Guid assignmentId, string userId);
+    void Update(Submission submission);
+    void Delete(Guid id);
+    Task SaveChangesAsync();
 }

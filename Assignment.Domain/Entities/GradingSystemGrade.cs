@@ -46,6 +46,11 @@ public class GradingSystemGrade
         IsPassingGrade = isPassingGrade;
     }
 
+    internal void ChangeOrder(int newOrder)
+    {
+        Order = newOrder;
+    }
+
     private static bool IsValidName(string name, out string? validationErrorMessage)
     {
         validationErrorMessage = null;

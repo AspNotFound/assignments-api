@@ -1,3 +1,5 @@
+using Assignment.Infrastructure.Ef.Repositories;
+
 namespace Assignment.Infrastructure.Ef.Entities;
 
 public class AssignmentEntity

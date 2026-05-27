@@ -1,6 +1,7 @@
-using Assignment.Application.Abstractions;
 using Assignment.Application.Abstractions.ReadRepositories;
-using Assignment.Application.Abstractions.Services;
+using Assignment.Application.Dtos;
+using Assignment.Application.Security.Authorization;
+using Assignment.Application.Security.Permissions;
 using Assignment.Application.Utility;
 
 namespace Assignment.Application.Queries.Assignments.Handlers;
@@ -8,26 +9,21 @@ namespace Assignment.Application.Queries.Assignments.Handlers;
 public class GetAllAssignmentsByCourseHandler
 (
     IAssignmentReadRepository assignment,
-    IUser user,
-    ICourseService course,
-    IEnrollmentService enrollment
+    AssignmentAuthorizationPolicy authorizationPolicy
 )
 {
     private readonly IAssignmentReadRepository _assignment = assignment;
-    private readonly IUser _user = user;
-    private readonly ICourseService _course = course;
-    private readonly IEnrollmentService _enrollment = enrollment;
+    private readonly AssignmentAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
-    public async Task<Result<IReadOnlyCollection<Domain.Aggregates.Assignment>>> HandleAsync(GetAllAssignmentsByCourseQuery request)
+    public async Task<Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>> HandleAsync(GetAllAssignmentsByCourseQuery request)
     {
-        var userHasAccess = _user.IsAdmin() ||
-            _user.IsStudent() && await _enrollment.IsStudentOfCourseAsync(_user.UserId, request.CourseId) ||
-            _user.IsTeacher() && await _course.IsTeacherOfCourseAsync(_user.UserId, request.CourseId);
-
+        var userHasAccess = await _authorizationPolicy.CanAccessCourseAssignmentsAsync(request.CourseId);
         if (!userHasAccess)
-            return Result<IReadOnlyCollection<Domain.Aggregates.Assignment>>.Failure(FailureType.Unauthorized, "You do not have access to the assignments of this course.");
+            return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>.Failure(FailureType.Unauthorized, "You do not have access to the assignments of this course.");
 
         var entities = await _assignment.GetAllByCourseIdAsync(request.CourseId);
-        return Result<IReadOnlyCollection<Domain.Aggregates.Assignment>>.Success(entities);
+
+        var dtos = (await Task.WhenAll(entities.Select(async e => Dto<Domain.Aggregates.Assignment, Permissions>.Create(e, new Permissions(Edit: await _authorizationPolicy.CanModifyAssignmentAsync(e.Id)))))).ToList();
+        return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Assignment, Permissions>>>.Success(dtos);
     }
 }

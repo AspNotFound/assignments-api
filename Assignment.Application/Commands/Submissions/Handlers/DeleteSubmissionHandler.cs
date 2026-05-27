@@ -29,7 +29,8 @@ public class DeleteSubmissionHandler(ISubmissionRepository submission, IUser use
             return Result.Failure(FailureType.DomainError, "Submission cannot be deleted.");
         }
 
-        await _submission.DeleteAsync(submission.Id);
+        _submission.Delete(submission.Id);
+        await _submission.SaveChangesAsync();
         return Result.Success();
     }
 }

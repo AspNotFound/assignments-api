@@ -4,7 +4,7 @@ public record CreateAssignmentCommand
 (
     Guid GradingSystemId,
     string CourseId,
-    string Title,
+    string Name,
     string Description,
-    DateTimeOffset DueDate
+    DateTimeOffset Deadline
 );

@@ -37,6 +37,11 @@ public class Assignment
             throw new DomainException(validationErrorMessageDescription);
         }
 
+        if (!IsValidDeadline(deadline, out var validationErrorMessage))
+        {
+            throw new DomainException(validationErrorMessage);
+        }
+
         Id = Guid.CreateVersion7();
         GradingSystemId = gradingSystemId;
         CourseId = courseId;
@@ -123,13 +128,6 @@ public class Assignment
     private static bool IsValidDeadline(DateTimeOffset deadline, out string? validationErrorMessage)
     {
         validationErrorMessage = null;
-
-        if (deadline <= DateTimeOffset.UtcNow)
-        {
-            validationErrorMessage = "Assignment deadline must be in the future.";
-            return false;
-        }
-
         return true;
     }
 

@@ -11,7 +11,6 @@ public class Enrollment : IEnrollmentService
 
     public async Task<bool> IsStudentOfCourseAsync(string userId, string courseId)
     {
-        // Implement logic to check if the user is a student of the course
-        return await Task.FromResult(true); // Placeholder implementation
+        throw new NotImplementedException();
     }
 }

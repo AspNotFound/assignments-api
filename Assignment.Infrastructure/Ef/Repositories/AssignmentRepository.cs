@@ -27,5 +27,15 @@ public class AssignmentRepository(AssignmentContext context) : RepositoryBase<Do
     protected override Domain.Aggregates.Assignment EntityToDomainModel(AssignmentEntity entity)
     {
         return Mapping.ConvertEntityToDomainModel(entity);
-    } 
+    }
+
+    protected override Guid EntityIdSelector(AssignmentEntity entity)
+    {
+        return entity.Id;
+    }
+
+    protected override void Apply(AssignmentEntity target, AssignmentEntity source)
+    {
+        target.Apply(source, _context);
+    }
 }

@@ -1,7 +1,11 @@
 using Assignment.Application.Abstractions;
 using Assignment.Application.Abstractions.Repositories;
 using Assignment.Application.Abstractions.Services;
+using Assignment.Application.Dtos;
+using Assignment.Application.Security.Authorization;
+using Assignment.Application.Security.Permissions;
 using Assignment.Application.Utility;
+using Assignment.Domain.Aggregates;
 using Assignment.Domain.Services;
 
 namespace Assignment.Application.Commands.Submissions.Handlers;
@@ -12,46 +16,45 @@ public class JudgeSubmissionHandler
     IAssignmentRepository assignment,
     IUser user,
     IGradingSystemRepository gradingSystem,
-    ICourseService courseService
+    SubmissionAuthorizationPolicy authorizationPolicy
 )
 {
     private readonly ISubmissionRepository _submission = submission;
     private readonly IAssignmentRepository _assignment = assignment;
     private readonly IUser _user = user;
     private readonly IGradingSystemRepository _gradingSystem = gradingSystem;
-    private readonly ICourseService _courseService = courseService;
+    private readonly SubmissionAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
-    public async Task<Result> Handle(JudgeSubmissionCommand request)
+    public async Task<Result<Dto<Submission, SubmissionPermissions>>> HandleAsync(JudgeSubmissionCommand request)
     {
+        var userIsAllowedToJudgeSubmission = await _authorizationPolicy.CanJudgeSubmissionAsync(request.SubmissionId);
+        if (!userIsAllowedToJudgeSubmission)
+        {
+            return Result<Dto<Submission, SubmissionPermissions>>.Failure(FailureType.Unauthorized, "User is not authorized to judge this submission.");
+        }
+
         var submission = await _submission.GetByIdAsync(request.SubmissionId);
         if (submission == null)
         {
-            return Result.Failure(FailureType.NotFound, $"Submission with ID {request.SubmissionId} not found.");
+            return Result<Dto<Submission, SubmissionPermissions>>.Failure(FailureType.NotFound, $"Submission with ID {request.SubmissionId} not found.");
         }
 
         var assignment = await _assignment.GetByIdAsync(submission.AssignmentId);
         if (assignment == null)
         {
-            return Result.Failure(FailureType.NotFound, $"Assignment with ID {submission.AssignmentId} not found.");
-        }
-
-        var userIsAllowedToJudgeSubmission = _user.IsAdmin() || (_user.IsTeacher() && await _courseService.IsTeacherOfCourseAsync(_user.UserId, assignment.CourseId));
-
-        if (!userIsAllowedToJudgeSubmission)
-        {
-            return Result.Failure(FailureType.Unauthorized, "User is not authorized to judge this submission.");
+            return Result<Dto<Submission, SubmissionPermissions>>.Failure(FailureType.NotFound, $"Assignment with ID {submission.AssignmentId} not found.");
         }
 
         var gradingSystem = await _gradingSystem.GetByIdAsync(assignment.GradingSystemId);
         if (gradingSystem == null)
         {
-            return Result.Failure(FailureType.NotFound, $"Grading system with ID {assignment.GradingSystemId} not found.");
+            return Result<Dto<Submission, SubmissionPermissions>>.Failure(FailureType.NotFound, $"Grading system with ID {assignment.GradingSystemId} not found.");
         }
 
         var grade = gradingSystem.Grades.FirstOrDefault(g => g.Id == request.GradingSystemGradeId);
         if (grade == null)
         {
-            return Result.Failure(FailureType.NotFound, $"Grade with ID {request.GradingSystemGradeId} not found in grading system with ID {assignment.GradingSystemId}.");
+            return Result<Dto<Submission, SubmissionPermissions>>.Failure(FailureType.NotFound, $"Grade with ID {request.GradingSystemGradeId} not found in grading system with ID {assignment.GradingSystemId}.");
         }
 
         try
@@ -60,11 +63,14 @@ public class JudgeSubmissionHandler
         }
         catch (Domain.Exceptions.DomainException ex)
         {
-            return Result.Failure(FailureType.DomainError, $"Failed to judge submission: {ex.Message}");
+            return Result<Dto<Submission, SubmissionPermissions>>.Failure(FailureType.DomainError, $"Failed to judge submission: {ex.Message}");
         }
 
-        await _submission.UpdateAsync(submission);
+        _submission.Update(submission);
+        await _submission.SaveChangesAsync();
 
-        return Result.Success();
+
+        var permissions = await SubmissionPermissions.CreateAsync(request.SubmissionId, _authorizationPolicy);
+        return Result<Dto<Submission, SubmissionPermissions>>.Success(new Dto<Submission, SubmissionPermissions>(submission, permissions));
     }
 }

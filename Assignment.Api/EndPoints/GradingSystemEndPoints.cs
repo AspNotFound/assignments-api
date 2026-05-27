@@ -10,7 +10,7 @@ public static class GradingSystemEndPoints
 {
     public static void MapGradingSystemEndPoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/grading-systems").RequireAuthorization();
+        var group = app.MapGroup("/api/gradingSystem").RequireAuthorization();
 
         group.MapGet("/", GetGradingSystems)
         .WithName("GetGradingSystems");
@@ -31,13 +31,13 @@ public static class GradingSystemEndPoints
     private static async Task<IResult> GetGradingSystems(GetAllGradingSystemsHandler handler)
     {
         var result = await handler.HandleAsync(GetAllGradingSystemsQuery.Instance);
-        return Results.Ok(result);
+        return result.ToResult();
     }
 
     private static async Task<IResult> Get(Guid id, GetGradingSystemByIdHandler handler)
     {
         var result = await handler.HandleAsync(new GetGradingSystemByIdQuery(id));
-        return result == null ? Results.NotFound() : Results.Ok(result);
+        return result.ToResult();
     }
 
     private static async Task<IResult> Post(CreateGradingSystemCommand command, CreateGradingSystemHandler handler)

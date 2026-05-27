@@ -9,7 +9,7 @@ public record UpdateSubmissionCommand
 
 public record Attachment
 (
-    Guid Id,
+    Guid? Id,
     string Name,
     string FileName,
     string Link

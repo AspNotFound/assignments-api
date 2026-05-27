@@ -43,6 +43,7 @@ namespace Assignment.Infrastructure.Ef
                 Attachments = [.. domainModel.Attachments.Select(a => new SubmissionAttachmentEntity
             {
                 Id = a.Id,
+                Name = a.Name,
                 FileName = a.FileName,
                 FileUrl = a.Link,
                 SubmissionId = domainModel.Id,
@@ -105,14 +106,16 @@ namespace Assignment.Infrastructure.Ef
             {
                 Id = domainModel.Id,
                 Name = domainModel.Name,
-                Grades = [.. domainModel.Grades.Select(g => new GradingSystemGradeEntity
-            {
-                Id = g.Id,
-                Name = g.Name,
-                IsPassingGrade = g.IsPassingGrade,
-                GradingSystemId = domainModel.Id,
-                Order = g.Order
-            })]
+                Grades = [.. 
+                    domainModel.Grades.Select(g => new GradingSystemGradeEntity
+                    {
+                        Id = g.Id,
+                        Name = g.Name,
+                        IsPassingGrade = g.IsPassingGrade,
+                        GradingSystemId = domainModel.Id,
+                        Order = g.Order
+                    })
+                ]
             };
         }
     }

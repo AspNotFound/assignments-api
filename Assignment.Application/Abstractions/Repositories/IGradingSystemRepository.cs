@@ -4,7 +4,8 @@ public interface IGradingSystemRepository
 {
     Task<bool> ExistsAsync(Guid gradingSystemId);
     Task<Domain.Aggregates.GradingSystem?> GetByIdAsync(Guid gradingSystemId);
-    Task AddAsync(Domain.Aggregates.GradingSystem gradingSystem);
-    Task UpdateAsync(Domain.Aggregates.GradingSystem gradingSystem);
-    Task DeleteAsync(Guid gradingSystemId);
+    void Add(Domain.Aggregates.GradingSystem gradingSystem);
+    void Update(Domain.Aggregates.GradingSystem gradingSystem);
+    void Delete(Guid gradingSystemId);
+    Task SaveChangesAsync();
 }

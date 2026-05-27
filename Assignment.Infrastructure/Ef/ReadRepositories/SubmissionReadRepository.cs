@@ -1,18 +1,13 @@
 using Assignment.Application.Abstractions.ReadRepositories;
 using Assignment.Domain.Aggregates;
-using Assignment.Infrastructure.Ef;
 using Assignment.Infrastructure.Ef.Contexts;
-using Assignment.Infrastructure.Ef.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-public class SubmissionReadRepository : ISubmissionReadRepository
-{
-    private readonly AssignmentContext _context;
+namespace Assignment.Infrastructure.Ef.ReadRepositories;
 
-    public SubmissionReadRepository(AssignmentContext context)
-    {
-        _context = context;
-    }
+public class SubmissionReadRepository(AssignmentContext context) : ISubmissionReadRepository
+{
+    private readonly AssignmentContext _context = context;
 
     public async Task<IReadOnlyCollection<Submission>> GetAllByAssignmentIdAsync(Guid assignmentId)
     {
@@ -63,5 +58,11 @@ public class SubmissionReadRepository : ISubmissionReadRepository
             .FirstOrDefaultAsync(s => s.Id == submissionId);
 
         return entity != null ? Mapping.ConvertEntityToDomainModel(entity) : default;
+    }
+
+    public async Task<bool> UserSubmissionExistsAsync(Guid assignmentId, string userId)
+    {
+        var exists = await _context.Submissions.AnyAsync(s => s.AssignmentId == assignmentId && s.AuthorId == userId);
+        return exists;
     }
 }

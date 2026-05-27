@@ -51,7 +51,8 @@ public class UpdateSubmissionHandler
             return Result<Submission>.Failure(FailureType.DomainError, ex.Message);
         }
 
-        await _submission.UpdateAsync(submission);
+        _submission.Update(submission);
+        await _submission.SaveChangesAsync();
         return Result<Submission>.Success(submission);
     }
 }

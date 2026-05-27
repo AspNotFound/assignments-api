@@ -1,6 +1,8 @@
-using Assignment.Application.Abstractions;
 using Assignment.Application.Abstractions.ReadRepositories;
-using Assignment.Application.Abstractions.Services;
+using Assignment.Application.Dtos;
+using Assignment.Application.Extensions;
+using Assignment.Application.Security.Authorization;
+using Assignment.Application.Security.Permissions;
 using Assignment.Application.Utility;
 
 namespace Assignment.Application.Queries.Submissions.Handlers;
@@ -9,40 +11,32 @@ public class GetSubmissionByIdHandler
 (
     ISubmissionReadRepository submission,
     IAssignmentReadRepository assignment,
-    IUser user,
-    ICourseService course,
-    IEnrollmentService enrollment
+    SubmissionAuthorizationPolicy authorizationPolicy
 )
 {
     private readonly ISubmissionReadRepository _submission = submission;
     private readonly IAssignmentReadRepository _assignment = assignment;
-    private readonly IUser _user = user;
-    private readonly ICourseService _course = course;
-    private readonly IEnrollmentService _enrollment = enrollment;
+    private readonly SubmissionAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
-    public async Task<Result<Domain.Aggregates.Submission>> HandleAsync(GetSubmissionByIdQuery request)
+    public async Task<Result<Dto<object, SubmissionPermissions>>> HandleAsync(GetSubmissionByIdQuery request)
     {
-        var assignmentId = await _submission.GetAssignmentIdBySubmissionIdAsync(request.SubmissionId);
-        if (assignmentId == null)
-            return Result<Domain.Aggregates.Submission>.Failure(FailureType.NotFound, "Submission not found.");
-
-        var courseId = await _assignment.GetCourseIdByAssignmentIdAsync(assignmentId.Value);
-        if (courseId == null)
-            return Result<Domain.Aggregates.Submission>.Failure(FailureType.NotFound, "Assignment not found.");
-
-        var authorId = await _submission.GetAuthorIdBySubmissionIdAsync(request.SubmissionId);
-
-        var userHasAccess = _user.IsAdmin() ||
-            _user.IsStudent() && authorId == _user.UserId ||
-            _user.IsTeacher() && await _course.IsTeacherOfCourseAsync(_user.UserId, courseId);
+        var userHasAccess = await _authorizationPolicy.CanAccessSubmissionAsync(request.SubmissionId);
 
         if (!userHasAccess)
-            return Result<Domain.Aggregates.Submission>.Failure(FailureType.Unauthorized, "You do not have access to this submission.");
+            return Result<Dto<object, SubmissionPermissions>>.Failure(FailureType.Unauthorized, "You do not have access to this submission.");
 
         var entity = await _submission.GetByIdAsync(request.SubmissionId);
         if (entity == null)
-            return Result<Domain.Aggregates.Submission>.Failure(FailureType.NotFound, "Submission not found.");
+            return Result<Dto<object, SubmissionPermissions>>.Failure(FailureType.NotFound, "Submission not found.");
 
-        return Result<Domain.Aggregates.Submission>.Success(entity);
+        var permissions = new SubmissionPermissions
+        (
+            Edit: await _authorizationPolicy.CanModifySubmissionAsync(entity.Id),
+            Judge: await _authorizationPolicy.CanJudgeSubmissionAsync(entity.Id),
+            ViewJudgement: await _authorizationPolicy.CanViewJudgementAsync(entity.Id)
+        );
+
+        var dto = entity.ToDto(permissions);
+        return Result<Dto<object, SubmissionPermissions>>.Success(dto);
     }
 }

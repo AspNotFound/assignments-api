@@ -1,7 +1,6 @@
-using Assignment.Application.Abstractions;
 using Assignment.Application.Abstractions.ReadRepositories;
 using Assignment.Application.Abstractions.Repositories;
-using Assignment.Application.Abstractions.Services;
+using Assignment.Application.Security.Authorization;
 using Assignment.Application.Utility;
 
 namespace Assignment.Application.Commands.Assignments.Handlers;
@@ -10,31 +9,23 @@ public class DeleteAssignmentHandler
 (
     IAssignmentReadRepository assignmentReadRepository,
     IAssignmentRepository assignmentRepository,
-    IUser user,
-    ICourseService courseService
+    AssignmentAuthorizationPolicy authorizationPolicy
 )
 {
     private readonly IAssignmentReadRepository _assignmentReadRepository = assignmentReadRepository;
     private readonly IAssignmentRepository _assignmentRepository = assignmentRepository;
-    private readonly IUser _user = user;
-    private readonly ICourseService _courseService = courseService;
+    private readonly AssignmentAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
     public async Task<Result> HandleAsync(DeleteAssignmentCommand request)
     {
-        var assignmentCourseId = await _assignmentReadRepository.GetCourseIdByAssignmentIdAsync(request.AssignmentId);
-        if (assignmentCourseId == null)
-        {
-            return Result.Failure(FailureType.NotFound, $"Assignment with id {request.AssignmentId} not found.");
-        }
-
-        var userIsAllowedToDeleteAssignment = _user.IsAdmin() || (_user.IsTeacher() && await _courseService.IsTeacherOfCourseAsync(_user.UserId, assignmentCourseId));
+        var userIsAllowedToDeleteAssignment = await _authorizationPolicy.CanModifyAssignmentAsync(request.AssignmentId);
         if (!userIsAllowedToDeleteAssignment)
         {
-            return Result.Failure(FailureType.Unauthorized, "Only teachers of the course or administrators can delete assignments.");
+            return Result.Failure(FailureType.Unauthorized, "User is not authorized to delete assignment.");
         }
 
-        await _assignmentRepository.DeleteAsync(request.AssignmentId);
-
+        _assignmentRepository.Delete(request.AssignmentId);
+        await _assignmentRepository.SaveChangesAsync();
         return Result.Success();
     }
 }

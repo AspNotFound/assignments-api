@@ -10,7 +10,7 @@ public static class AssignmentEndPoints
 {
     public static void MapAssignmentEndPoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/assignments").RequireAuthorization();
+        var group = app.MapGroup("/api/assignment").RequireAuthorization();
 
         group.MapGet("/{id:guid}", GetAssignmentById)
             .WithName("GetAssignmentById")

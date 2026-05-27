@@ -33,7 +33,7 @@ public class GradingSystem
     public string Name { get; private set; }
 
     private readonly List<GradingSystemGrade> _grades;
-    public IReadOnlyCollection<GradingSystemGrade> Grades => _grades.AsReadOnly();
+    public IReadOnlyCollection<GradingSystemGrade> Grades => _grades;
 
     public void Rename(string newName)
     {
@@ -41,7 +41,24 @@ public class GradingSystem
         {
             throw new DomainException(validationErrorMessage);
         }
+
         Name = newName;
+    }
+
+    public void ChangeGrades(List<IGradingSystemGradeModification> modification)
+    {
+        var gradesCopy = _grades.Select(g => g.Copy()).ToList();
+        foreach (var gradeModification in modification)
+        {
+            gradeModification.Apply(gradesCopy);
+        }
+
+        if (!IsValidGrades(gradesCopy, out var validationErrorMessage))
+        {
+            throw new DomainException(validationErrorMessage);
+        }
+
+        modification.ForEach(m => m.Apply(_grades));
     }
 
     public void AddGrade(GradingSystemGrade grade)
@@ -50,6 +67,13 @@ public class GradingSystem
         {
             throw new DomainException(validationErrorMessage);
         }
+
+        var gradesCopy = new List<GradingSystemGrade>(_grades) { grade };
+        if (!IsValidGrades(gradesCopy, out var validationErrorMessageGrades))
+        {
+            throw new DomainException(validationErrorMessageGrades);
+        }
+
         _grades.Add(grade);
     }
 
@@ -70,28 +94,26 @@ public class GradingSystem
 
     public void RenameGrade(Guid gradeId, string newName)
     {
-        var gradeToRename = _grades.FirstOrDefault(g => g.Id == gradeId) ?? throw new DomainException($"No grade with ID '{gradeId}' found in the grading system.");
-        var gradeCopy = gradeToRename.Copy();
-        gradeCopy.Rename(newName);
-        if (!IsValidGrade([.. _grades.Where(g => g.Id != gradeId)], gradeCopy, out var validationErrorMessage))
+        var gradesCopy = _grades.Select(g => g.Copy()).ToList();
+        var gradeToRename = gradesCopy.FirstOrDefault(g => g.Id == gradeId) ?? throw new DomainException($"No grade with ID '{gradeId}' found in the grading system.");
+        gradeToRename.Rename(newName);
+        if (!IsValidGrades(gradesCopy, out var validationErrorMessage))
         {
             throw new DomainException(validationErrorMessage);
         }
-        gradeToRename.Rename(newName);
+        _grades.Single(g => g.Id == gradeId).Rename(newName);
     }
 
     public void ChangeGradePassingStatus(Guid gradeId, bool isPassingGrade)
     {
-        var gradeToChange = _grades.FirstOrDefault(g => g.Id == gradeId) ?? throw new DomainException($"No grade with ID '{gradeId}' found in the grading system.");
-
-        var gradeCopy = gradeToChange.Copy();
-        gradeCopy.ChangePassingStatus(isPassingGrade);
-
-        if (!IsValidGrade([.. _grades.Where(g => g.Id != gradeId)], gradeCopy, out var validationErrorMessage))
+        var gradesCopy = _grades.Select(g => g.Copy()).ToList();
+        var gradeToChange = gradesCopy.FirstOrDefault(g => g.Id == gradeId) ?? throw new DomainException($"No grade with ID '{gradeId}' found in the grading system.");
+        gradeToChange.ChangePassingStatus(isPassingGrade);
+        if (!IsValidGrades(gradesCopy, out var validationErrorMessage))
         {
             throw new DomainException(validationErrorMessage);
         }
-        gradeToChange.ChangePassingStatus(isPassingGrade);
+        _grades.Single(g => g.Id == gradeId).ChangePassingStatus(isPassingGrade);
     }
 
     private static bool IsValidName(string name, out string? validationErrorMessage)
@@ -125,6 +147,7 @@ public class GradingSystem
             validationErrorMessage = $"A grade with the order value '{newGrade.Order}' already exists in the grading system.";
             return false;
         }
+
         if (newGrade.IsPassingGrade)
         {
             var failingGrades = existingGrades.Where(g => !g.IsPassingGrade).ToList();
@@ -194,5 +217,48 @@ public class GradingSystem
     public static GradingSystem Hydrate(Guid id, string name, IReadOnlyCollection<GradingSystemGrade> grades)
     {
         return new GradingSystem(id, name, grades);
+    }
+}
+
+public interface IGradingSystemGradeModification
+{
+    void Apply(List<GradingSystemGrade> grades);
+}
+
+public class AddGradingSystemGradeModification(GradingSystemGrade grade) : IGradingSystemGradeModification
+{
+    public GradingSystemGrade Grade { get; } = grade;
+    public void Apply(List<GradingSystemGrade> grades)
+    {
+        grades.Add(Grade);
+    }
+}
+
+public class RemoveGradingSystemGradeModification(Guid gradeId) : IGradingSystemGradeModification
+{
+    public Guid GradeId { get; } = gradeId;
+    public void Apply(List<GradingSystemGrade> grades)
+    {
+        var gradeToRemove = grades.FirstOrDefault(g => g.Id == GradeId);
+        if (gradeToRemove != null)
+        {
+            grades.Remove(gradeToRemove);
+        }
+    }
+}
+
+public class UpdateGradingSystemGradeModification(Guid gradeId, string newName, bool newIsPassingGrade, int newOrder) : IGradingSystemGradeModification
+{
+    public Guid GradeId { get; } = gradeId;
+    public string NewName { get; } = newName;
+    public bool NewIsPassingGrade { get; } = newIsPassingGrade;
+    public int NewOrder { get; } = newOrder;
+
+    public void Apply(List<GradingSystemGrade> grades)
+    {
+        var gradeToUpdate = grades.FirstOrDefault(g => g.Id == GradeId) ?? throw new DomainException($"No grade with ID '{GradeId}' found in the grading system.");
+        gradeToUpdate.Rename(NewName);
+        gradeToUpdate.ChangePassingStatus(NewIsPassingGrade);
+        gradeToUpdate.ChangeOrder(NewOrder);
     }
 }

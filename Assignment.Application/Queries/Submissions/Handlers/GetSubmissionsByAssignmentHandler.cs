@@ -1,35 +1,33 @@
-using Assignment.Application.Abstractions;
 using Assignment.Application.Abstractions.ReadRepositories;
-using Assignment.Application.Abstractions.Services;
+using Assignment.Application.Dtos;
+using Assignment.Application.Security.Authorization;
+using Assignment.Application.Security.Permissions;
 using Assignment.Application.Utility;
 
 namespace Assignment.Application.Queries.Submissions.Handlers;
 
 public class GetSubmissionsByAssignmentHandler
 (
-    IAssignmentReadRepository assignment,
     ISubmissionReadRepository submission,
-    IUser user,
-    ICourseService course
+    SubmissionAuthorizationPolicy authorizationPolicy
 )
 {
     private readonly ISubmissionReadRepository _submission = submission;
-    private readonly IAssignmentReadRepository _assignment = assignment;
-    private readonly IUser _user = user;
-    private readonly ICourseService _course = course;
+    private readonly SubmissionAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
-    public async Task<Result<IReadOnlyCollection<Domain.Aggregates.Submission>>> HandleAsync(GetSubmissionsByAssignmentQuery request)
+    public async Task<Result<IReadOnlyCollection<Dto<Domain.Aggregates.Submission, SubmissionPermissions>>>> HandleAsync(GetSubmissionsByAssignmentQuery request)
     {
-        var courseId = await _assignment.GetCourseIdByAssignmentIdAsync(request.AssignmentId);
-        if (courseId == null)
-            return Result<IReadOnlyCollection<Domain.Aggregates.Submission>>.Failure(FailureType.NotFound, "Assignment not found.");
-
-        var userHasAccess = _user.IsAdmin() || _user.IsTeacher() && await _course.IsTeacherOfCourseAsync(_user.UserId, courseId);
-
+        var userHasAccess = await _authorizationPolicy.CanAccessAssignmentSubmissionsAsync(request.AssignmentId);
         if (!userHasAccess)
-            return Result<IReadOnlyCollection<Domain.Aggregates.Submission>>.Failure(FailureType.Unauthorized, "You do not have access to these submissions.");
+            return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Submission, SubmissionPermissions>>>.Failure(FailureType.Unauthorized, "You do not have access to these submissions.");
 
         var submissions = await _submission.GetAllByAssignmentIdAsync(request.AssignmentId);
-        return Result<IReadOnlyCollection<Domain.Aggregates.Submission>>.Success(submissions);
+        var dtos = await Task.WhenAll(submissions.Select(async submission => new Dto<Domain.Aggregates.Submission, SubmissionPermissions>
+        (
+            submission,
+            await SubmissionPermissions.CreateAsync(submission.Id, _authorizationPolicy)
+        )));
+
+        return Result<IReadOnlyCollection<Dto<Domain.Aggregates.Submission, SubmissionPermissions>>>.Success(dtos);
     }
 }

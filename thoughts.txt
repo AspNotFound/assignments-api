@@ -95,3 +95,10 @@ Teachers must be able to grade submissions.
 * Ensure the submission exists
 * Ensure the grading user is an instructor on the course.
 * 
+
+# Vyer
+
+Courses/[CourseId] (show all assignments)
+Assignments/[AssignmentId]
+/Submissions/[SubmissionId]
+GradingSystems/[GradingSystemId]

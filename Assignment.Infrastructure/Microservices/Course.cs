@@ -4,13 +4,14 @@ namespace Assignment.Infrastructure.Microservices;
 
 public class Course : ICourseService
 {
+    #warning Implement these.
     public async Task<bool> IsTeacherOfCourseAsync(string userId, string courseId)
     {
-        throw new NotImplementedException();
+        return true;
     }
 
     public async Task<bool> ExistsAsync(string courseId)
     {
-        throw new NotImplementedException();
+        return true;
     }
 }

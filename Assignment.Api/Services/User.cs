@@ -3,14 +3,9 @@ using Assignment.Application.Abstractions;
 
 namespace Assignment.Api.Services;
 
-public class User : IUser
+public class User(IHttpContextAccessor httpContextAccessor) : IUser
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public User(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     public string UserId
     {

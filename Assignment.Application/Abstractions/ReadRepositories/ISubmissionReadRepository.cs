@@ -7,4 +7,5 @@ public interface ISubmissionReadRepository
     public Task<IReadOnlyCollection<Domain.Aggregates.Submission>> GetAllByAssignmentIdAsync(Guid assignmentId);
     public Task<Domain.Aggregates.Submission?> GetByAssignmentAndAuthorAsync(Guid assignmentId, string authorId);
     public Task<Guid?> GetAssignmentIdBySubmissionIdAsync(Guid submissionId);
+    public Task<bool> UserSubmissionExistsAsync(Guid assignmentId, string userId);
 }

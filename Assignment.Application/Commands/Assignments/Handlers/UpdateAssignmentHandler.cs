@@ -1,23 +1,28 @@
 using Assignment.Application.Abstractions.Repositories;
+using Assignment.Application.Dtos;
+using Assignment.Application.Security.Authorization;
+using Assignment.Application.Security.Permissions;
 using Assignment.Application.Utility;
 
 namespace Assignment.Application.Commands.Assignments.Handlers;
 
-public class UpdateAssignmentHandler
+public class UpdateAssignmentHandler(IAssignmentRepository assignmentRepository, AssignmentAuthorizationPolicy authorizationPolicy)
 {
-    private readonly IAssignmentRepository _assignmentRepository;
+    private readonly IAssignmentRepository _assignmentRepository = assignmentRepository;
+    private readonly AssignmentAuthorizationPolicy _authorizationPolicy = authorizationPolicy;
 
-    public UpdateAssignmentHandler(IAssignmentRepository assignmentRepository)
+    public async Task<Result<Dto<Domain.Aggregates.Assignment, Permissions>>> HandleAsync(UpdateAssignmentCommand request)
     {
-        _assignmentRepository = assignmentRepository;
-    }
+        var userIsAllowedToUpdateAssignment = await _authorizationPolicy.CanModifyAssignmentAsync(request.Id);
+        if (!userIsAllowedToUpdateAssignment)
+        {
+            return Result<Dto<Domain.Aggregates.Assignment, Permissions>>.Failure(FailureType.Unauthorized, "User is not authorized to update assignment.");
+        }
 
-    public async Task<Result<Domain.Aggregates.Assignment>> HandleAsync(UpdateAssignmentCommand request)
-    {
         var assignment = await _assignmentRepository.GetByIdAsync(request.Id);
         if (assignment == null)
         {
-            return Result<Domain.Aggregates.Assignment>.Failure(FailureType.NotFound, $"Assignment with id {request.Id} not found.");
+            return Result<Dto<Domain.Aggregates.Assignment, Permissions>>.Failure(FailureType.NotFound, $"Assignment with id {request.Id} not found.");
         }
 
         try
@@ -28,10 +33,12 @@ public class UpdateAssignmentHandler
         }
         catch (Domain.Exceptions.DomainException ex)
         {
-            return Result<Domain.Aggregates.Assignment>.Failure(FailureType.DomainError, $"Failed to update assignment: {ex.Message}");
+            return Result<Dto<Domain.Aggregates.Assignment, Permissions>>.Failure(FailureType.DomainError, $"Failed to update assignment: {ex.Message}");
         }
 
-        await _assignmentRepository.UpdateAsync(assignment);
-        return Result<Domain.Aggregates.Assignment>.Success(assignment);
+        _assignmentRepository.Update(assignment);
+        await _assignmentRepository.SaveChangesAsync();
+        var dto = Dto<Domain.Aggregates.Assignment, Permissions>.Create(assignment, new Permissions(Edit: userIsAllowedToUpdateAssignment));
+        return Result<Dto<Domain.Aggregates.Assignment, Permissions>>.Success(dto);
     }
 }

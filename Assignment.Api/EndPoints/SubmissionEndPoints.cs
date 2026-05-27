@@ -10,7 +10,7 @@ public static class SubmissionEndPoints
 {
     public static void MapSubmissionEndPoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/submissions").RequireAuthorization();
+        var group = app.MapGroup("/api/submission").RequireAuthorization();
 
         group.MapGet("/{id:guid}", Get)
             .WithName("GetSubmissionById")
@@ -27,6 +27,10 @@ public static class SubmissionEndPoints
         group.MapDelete("/{id:guid}", Delete)
             .WithName("DeleteSubmission")
             .WithDescription("Deletes a submission by its ID.");
+
+        group.MapPost("/judge", Judge)
+            .WithName("JudgeSubmission")
+            .WithDescription("Judges a submission by its ID.");
     }
 
     private static async Task<IResult> Get(Guid id, GetSubmissionByIdHandler handler)
@@ -50,6 +54,12 @@ public static class SubmissionEndPoints
     private static async Task<IResult> Delete(Guid id, DeleteSubmissionHandler handler)
     {
         var command = new DeleteSubmissionCommand(id);
+        var result = await handler.HandleAsync(command);
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> Judge(JudgeSubmissionCommand command, JudgeSubmissionHandler handler)
+    {
         var result = await handler.HandleAsync(command);
         return result.ToResult();
     }

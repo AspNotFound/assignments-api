@@ -4,6 +4,7 @@ using Assignment.Application.Commands.Submissions.Handlers;
 using Assignment.Application.Queries.Assignments.Handlers;
 using Assignment.Application.Queries.GradingSystems.Handlers;
 using Assignment.Application.Queries.Submissions.Handlers;
+using Assignment.Application.Security.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Assignment.Application.Extensions;
@@ -34,6 +35,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<GetAuthorAssignmentSubmissionHandler>();
         services.AddScoped<GetSubmissionByIdHandler>();
         services.AddScoped<GetSubmissionsByAssignmentHandler>();
+
+        services.AddScoped<AssignmentAuthorizationPolicy>();
+        services.AddScoped<SubmissionAuthorizationPolicy>();
+        services.AddScoped<GradingSystemAuthorizationPolicy>();
 
         return services;
     }

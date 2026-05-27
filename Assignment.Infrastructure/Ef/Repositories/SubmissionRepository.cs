@@ -34,4 +34,14 @@ public class SubmissionRepository(AssignmentContext context) : RepositoryBase<Su
     {
         return Mapping.ConvertEntityToDomainModel(entity);
     }
+
+    protected override Guid EntityIdSelector(SubmissionEntity entity)
+    {
+        return entity.Id;
+    }
+
+    protected override void Apply(SubmissionEntity target, SubmissionEntity source)
+    {
+        target.Apply(source, _context);
+    }
 }
