@@ -14,6 +14,7 @@ public class AssignmentContext(DbContextOptions<AssignmentContext> options) : Db
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("assignment");
         modelBuilder.Entity<AssignmentEntity>(entity =>
         {
             entity.HasKey(e => e.Id);
