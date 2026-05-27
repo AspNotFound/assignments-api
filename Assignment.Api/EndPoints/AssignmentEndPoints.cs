@@ -3,6 +3,8 @@ using Assignment.Application.Commands.Assignments;
 using Assignment.Application.Commands.Assignments.Handlers;
 using Assignment.Application.Queries.Assignments;
 using Assignment.Application.Queries.Assignments.Handlers;
+using Assignment.Application.Queries.Submissions;
+using Assignment.Application.Queries.Submissions.Handlers;
 
 namespace Assignment.Api.EndPoints;
 
@@ -34,6 +36,11 @@ public static class AssignmentEndPoints
             .MapDelete("/{id:guid}", DeleteAssignment)
             .WithName("DeleteAssignment")
             .WithDescription("Deletes an existing assignment.");
+
+        group
+            .MapGet("/{assignmentId:guid}/submissions", GetSubmissions)
+            .WithName("GetSubmissionsByAssignment")
+            .WithDescription("Retrieves all submissions for a specific assignment.");
     }
 
     private static async Task<IResult> GetAssignmentById(Guid id, GetAssignmentByIdHandler handler)
@@ -64,6 +71,12 @@ public static class AssignmentEndPoints
     private static async Task<IResult> GetAssignments(string? courseId, GetAllAssignmentsHandler handler)
     {
         var result = await handler.HandleAsync(new GetAllAssignments(courseId));
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetSubmissions(Guid assignmentId, GetSubmissionsByAssignmentHandler handler)
+    {
+        var result = await handler.HandleAsync(new GetSubmissionsByAssignmentQuery(assignmentId));
         return result.ToResult();
     }
 }
