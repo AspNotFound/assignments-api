@@ -1,4 +1,5 @@
 using Assignment.Api.EndPoints;
+using Assignment.Api.OpenApi;
 using Assignment.Api.Services;
 using Assignment.Application.Abstractions;
 using Assignment.Application.Extensions;
@@ -7,6 +8,7 @@ using Microsoft.IdentityModel.Protocols.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddOpenApiConfiguration();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUser, User>();
 builder.Services
@@ -40,18 +42,13 @@ builder.Services
         };
     });
 
-builder.Services.AddOpenApi();
-
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
 app.UseHttpsRedirection();
 app.UseCors("All");
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapOpenApiEndpoints();
 
 app.MapAssignmentEndPoints();
 app.MapGradingSystemEndPoints();
