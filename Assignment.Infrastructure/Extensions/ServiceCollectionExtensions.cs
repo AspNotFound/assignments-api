@@ -1,10 +1,8 @@
 using Assignment.Application.Abstractions.ReadRepositories;
 using Assignment.Application.Abstractions.Repositories;
-using Assignment.Application.Abstractions.Services;
 using Assignment.Infrastructure.Ef.Contexts;
 using Assignment.Infrastructure.Ef.ReadRepositories;
 using Assignment.Infrastructure.Ef.Repositories;
-using Assignment.Infrastructure.Microservices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +18,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAssignmentRepository, AssignmentRepository>();
         services.AddScoped<IGradingSystemRepository, GradingSystemRepository>();
         services.AddScoped<ISubmissionRepository, SubmissionRepository>();
-        services.AddScoped<ICourseService, Course>();
-        services.AddScoped<IEnrollmentService, Enrollment>();
 
         services.AddScoped<IAssignmentReadRepository, AssignmentReadRepository>();
         services.AddScoped<IGradingSystemReadRepository, GradingSystemReadRepository>();

@@ -2,6 +2,7 @@ using Assignment.Api.EndPoints;
 using Assignment.Api.OpenApi;
 using Assignment.Api.Services;
 using Assignment.Application.Abstractions;
+using Assignment.Application.Abstractions.Services;
 using Assignment.Application.Extensions;
 using Assignment.Infrastructure.Extensions;
 using Microsoft.IdentityModel.Protocols.Configuration;
@@ -11,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApiConfiguration();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUser, User>();
+builder.Services.AddScoped<ICourseService, Course>();
+builder.Services.AddScoped<IEnrollmentService, Enrollment>();
+
 builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration, builder.Environment);
